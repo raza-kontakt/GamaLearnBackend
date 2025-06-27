@@ -10,11 +10,14 @@ COPY package*.json ./
 # Install all dependencies (including dev dependencies for building)
 RUN npm ci && npm cache clean --force
 
-# Copy source code
+# Copy source code and Prisma schema
 COPY . .
 
 # Build TypeScript
 RUN npm run build
+
+# Generate Prisma client in builder stage
+RUN npm run db:generate
 
 # Production stage
 FROM node:18-alpine AS production
@@ -28,8 +31,11 @@ COPY package*.json ./
 # Install only production dependencies
 RUN npm ci --only=production && npm cache clean --force
 
-# Copy built application from builder stage
+# Copy built application and Prisma generated files from builder stage
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs

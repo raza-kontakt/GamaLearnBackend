@@ -49,3 +49,8 @@ Thumbs.db
 
 # Docker
 .dockerignore 
+/generated/prisma
+
+# Prisma
+prisma/*.db
+prisma/migrations/

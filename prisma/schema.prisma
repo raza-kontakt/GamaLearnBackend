@@ -1,0 +1,190 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AssessmentStatus {
+  NOT_STARTED
+  ON_GOING
+  FINISHED
+  CLOSED
+}
+
+enum ExamSubmissionStatus {
+  ABSENT
+  PENDING
+  MOVED_TO_PAPER
+  IN_PROGRESS
+  BLOCKED
+  DENIED
+  STUDENT_SUBMISSION
+  TIMER_SUBMISSION
+}
+
+enum SessionHealth {
+  GOOD
+  POOR
+  DISCONNECTED
+}
+
+enum ActivityType {
+  LOGIN
+  LOGOUT
+  QUESTION_ANSWERED
+  SESSION_RESET
+  SWITCH_TO_PAPER
+}
+
+model Area {
+  id           Int               @id @default(autoincrement())
+  name         String
+  assessments  Assessment[]
+  groups       Group[]
+  createdAt    DateTime          @default(now())
+  translations AreaTranslation[]
+}
+
+model AreaTranslation {
+  id     Int    @id @default(autoincrement())
+  areaId Int
+  lang   String
+  name   String
+  area   Area   @relation(fields: [areaId], references: [id])
+}
+
+model Program {
+  id           Int                  @id @default(autoincrement())
+  name         String
+  courses      Course[]
+  createdAt    DateTime             @default(now())
+  translations ProgramTranslation[]
+}
+
+model ProgramTranslation {
+  id        Int     @id @default(autoincrement())
+  programId Int
+  lang      String
+  name      String
+  program   Program @relation(fields: [programId], references: [id])
+}
+
+model Course {
+  id           Int                 @id @default(autoincrement())
+  name         String
+  programId    Int
+  program      Program             @relation(fields: [programId], references: [id])
+  assessments  Assessment[]
+  createdAt    DateTime            @default(now())
+  translations CourseTranslation[]
+}
+
+model CourseTranslation {
+  id       Int    @id @default(autoincrement())
+  courseId Int
+  lang     String
+  name     String
+  course   Course @relation(fields: [courseId], references: [id])
+}
+
+model Assessment {
+  id           Int                     @id @default(autoincrement())
+  name         String
+  startDate    DateTime
+  endDate      DateTime
+  status       AssessmentStatus
+  areaId       Int
+  courseId     Int
+  area         Area                    @relation(fields: [areaId], references: [id])
+  course       Course                  @relation(fields: [courseId], references: [id])
+  submissions  ExamSubmission[]
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  translations AssessmentTranslation[]
+}
+
+model AssessmentTranslation {
+  id           Int        @id @default(autoincrement())
+  assessmentId Int
+  lang         String
+  name         String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+}
+
+model Group {
+  id           Int                @id @default(autoincrement())
+  name         String
+  parentId     Int?
+  areaId       Int
+  area         Area               @relation(fields: [areaId], references: [id])
+  parent       Group?             @relation("GroupHierarchy", fields: [parentId], references: [id])
+  children     Group[]            @relation("GroupHierarchy")
+  students     Student[]
+  translations GroupTranslation[]
+}
+
+model GroupTranslation {
+  id      Int    @id @default(autoincrement())
+  groupId Int
+  lang    String
+  name    String
+  group   Group  @relation(fields: [groupId], references: [id])
+}
+
+model Student {
+  id           Int                  @id @default(autoincrement())
+  username     String               @unique
+  fullName     String
+  email        String?
+  groupId      Int
+  group        Group                @relation(fields: [groupId], references: [id])
+  submissions  ExamSubmission[]
+  createdAt    DateTime             @default(now())
+  translations StudentTranslation[]
+}
+
+model StudentTranslation {
+  id        Int     @id @default(autoincrement())
+  studentId Int
+  lang      String
+  fullName  String
+  student   Student @relation(fields: [studentId], references: [id])
+}
+
+model ExamSubmission {
+  id            Int                  @id @default(autoincrement())
+  studentId     Int
+  assessmentId  Int
+  loginTime     DateTime?
+  startTime     DateTime?
+  questionsSync Int                  @default(0)
+  timeElapsed   Int                  @default(0)
+  status        ExamSubmissionStatus
+  sessionHealth SessionHealth        @default(GOOD)
+  student       Student              @relation(fields: [studentId], references: [id])
+  assessment    Assessment           @relation(fields: [assessmentId], references: [id])
+  activities    StudentActivity[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@unique([studentId, assessmentId])
+}
+
+model StudentActivity {
+  id           Int            @id @default(autoincrement())
+  submissionId Int
+  activityType ActivityType
+  timestamp    DateTime       @default(now())
+  details      String?
+  submission   ExamSubmission @relation(fields: [submissionId], references: [id])
+}
+
+model Examiner {
+  id       Int    @id @default(autoincrement())
+  name     String
+  userName String
+  password String
+}
