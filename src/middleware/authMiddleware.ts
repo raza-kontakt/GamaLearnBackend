@@ -11,11 +11,15 @@ export const authMiddleware = (
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.cookies?.token;
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.startsWith('Bearer ') 
+    ? authHeader.substring(7) 
+    : null;
 
   if (!token) {
     return next(new AppError('Authentication required', 401));
   }
+  
   try {
     const decoded = jwt.verify(
       token,

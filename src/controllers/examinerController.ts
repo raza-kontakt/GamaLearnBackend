@@ -12,16 +12,10 @@ export const loginController = async (
     const { userName, password } = req.body;
     const result = await loginExaminer(userName, password);
 
-    res
-      .cookie("token", result.token, {
-        // httpOnly: true,
-        // sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-        // secure: process.env.NODE_ENV === "production",
-        maxAge: 10 * 60 * 60 * 1000, // 10 hours
-        // domain: process.env.NODE_ENV === "production" ? undefined : undefined,
-      })
-      .status(200)
-      .json({ examiner: result.examiner });
+    res.status(200).json({ 
+      examiner: result.examiner,
+      token: result.token
+    });
   } catch (error) {
     console.log(error);
     if (error instanceof AppError) {
@@ -37,15 +31,7 @@ export const logoutController = async (
   next: NextFunction
 ) => {
   try {
-    res
-      .clearCookie("token", {
-        // httpOnly: true,
-        // sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-        // secure: process.env.NODE_ENV === "production",
-        // domain: process.env.NODE_ENV === "production" ? undefined : undefined,
-      })
-      .status(200)
-      .json({ message: "Logged out successfully" });
+    res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     next(new AppError("Internal server error", 500));
   }

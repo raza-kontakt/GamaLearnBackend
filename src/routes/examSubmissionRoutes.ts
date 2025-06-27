@@ -7,15 +7,24 @@ import {
   switchAbsentToPaper,
   switchStudentSubmissionToPending,
 } from "../controllers/examSubmissionController";
+import { authMiddleware } from "../middleware/authMiddleware";
 
 const router = Router();
 
-router.get("/", getExamSubmissions);
-router.get("/filters", getExamSubmissionFilters);
-router.get("/search-students/:assessmentId", searchStudentsInExamSubmission);
-router.get("/:id", getExamSubmission);
+router.get("/", authMiddleware, getExamSubmissions);
+router.get("/filters", authMiddleware, getExamSubmissionFilters);
+router.get(
+  "/search-students/:assessmentId",
+  authMiddleware,
+  searchStudentsInExamSubmission
+);
+router.get("/:id", authMiddleware, getExamSubmission);
 
-router.patch("/:id/switch-to-paper", switchAbsentToPaper);
-router.patch("/:id/switch-to-pending", switchStudentSubmissionToPending);
+router.patch("/:id/switch-to-paper", authMiddleware, switchAbsentToPaper);
+router.patch(
+  "/:id/switch-to-pending",
+  authMiddleware,
+  switchStudentSubmissionToPending
+);
 
 export default router;

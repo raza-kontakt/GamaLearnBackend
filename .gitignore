@@ -4,6 +4,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+Deployment_instructions.txt
+
 # Build output
 dist/
 build/
