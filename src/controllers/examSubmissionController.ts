@@ -3,6 +3,7 @@ import { getLang } from "../utils";
 import {
   getExamSubmissionsService,
   getExamSubmissionFiltersService,
+  searchStudentsInExamSubmissionService,
 } from "../services/examSubmissionService";
 import prisma from "../libs/prisma";
 
@@ -59,6 +60,80 @@ export const getExamSubmissions = async (
     });
 
     return res.send(result);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const getExamSubmission = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const lang = String(getLang(req));
+    const filter = { id: Number(id) };
+    const result = await getExamSubmissionsService({
+      lang,
+      filter,
+      page: 1,
+      limit: 1,
+    });
+    if (!result.data || result.data.length === 0) {
+      return res.status(404).json({ message: "Exam submission not found" });
+    }
+    return res.json({ submission: result.data[0] });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const getExamSubmissionFilters = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const lang = String(getLang(req));
+    const { student, assessment, area, status, sessionHealth } = req.query;
+
+    const filters: any = {};
+    if (student) filters.student = true;
+    if (assessment) filters.assessment = true;
+    if (area) filters.area = true;
+    if (status) filters.status = true;
+    if (sessionHealth) filters.sessionHealth = true;
+
+    const filterOptions = await getExamSubmissionFiltersService(lang, filters);
+    return res.json(filterOptions);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const searchStudentsInExamSubmission = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { assessmentId } = req.params;
+    const { searchTerm, limit } = req.query;
+    const lang = String(getLang(req));
+
+    if (!searchTerm || typeof searchTerm !== 'string') {
+      return res.status(400).json({ message: "Search term is required" });
+    }
+
+    const students = await searchStudentsInExamSubmissionService(
+      Number(assessmentId),
+      searchTerm,
+      lang,
+      Number(limit) || 5
+    );
+
+    return res.json({ students });
   } catch (err) {
     return next(err);
   }

@@ -217,3 +217,56 @@ export async function getExamSubmissionFiltersService(
   await Promise.all(promises);
   return results;
 }
+
+export async function searchStudentsInExamSubmissionService(
+  assessmentId: number,
+  searchTerm: string,
+  lang: string,
+  limit: number = 5
+) {
+  const students = await prisma.student.findMany({
+    where: {
+      submissions: {
+        some: {
+          assessmentId: assessmentId,
+        },
+      },
+      OR: [
+        {
+          fullName: {
+            contains: searchTerm,
+            mode: 'insensitive',
+          },
+        },
+        {
+          translations: {
+            some: {
+              lang: lang,
+              fullName: {
+                contains: searchTerm,
+                mode: 'insensitive',
+              },
+            },
+          },
+        },
+      ],
+    },
+    select: {
+      id: true,
+      fullName: true,
+      translations: {
+        where: { lang },
+        select: { fullName: true },
+      },
+    },
+    take: limit,
+  });
+
+  return students.map((student: any) => ({
+    id: student.id,
+    fullName:
+      Array.isArray(student.translations) && student.translations[0]?.fullName
+        ? student.translations[0].fullName
+        : student.fullName,
+  }));
+}
