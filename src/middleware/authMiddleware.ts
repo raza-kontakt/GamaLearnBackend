@@ -11,10 +11,8 @@ export const authMiddleware = (
   res: Response,
   next: NextFunction
 ) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.startsWith('Bearer ') 
-    ? authHeader.substring(7) 
-    : null;
+  // Read token from cookies instead of Authorization header
+  const token = req.cookies?.authToken;
 
   if (!token) {
     return next(new AppError('Authentication required', 401));

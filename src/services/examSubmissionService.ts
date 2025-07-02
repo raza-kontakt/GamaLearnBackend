@@ -235,7 +235,6 @@ export async function searchStudentsInExamSubmissionService(
         {
           fullName: {
             contains: searchTerm,
-            mode: 'insensitive',
           },
         },
         {
@@ -244,7 +243,6 @@ export async function searchStudentsInExamSubmissionService(
               lang: lang,
               fullName: {
                 contains: searchTerm,
-                mode: 'insensitive',
               },
             },
           },

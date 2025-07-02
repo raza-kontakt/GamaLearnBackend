@@ -12,9 +12,18 @@ export const loginController = async (
     const { userName, password } = req.body;
     const result = await loginExaminer(userName, password);
 
-    res.status(200).json({ 
+    // Set secure httpOnly cookie with JWT token
+    res.cookie("authToken", result.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // HTTPS in production
+      sameSite: "strict",
+      maxAge: 10 * 60 * 60 * 1000, // 10 hours (same as JWT expiry)
+      path: "/",
+    });
+
+    res.status(200).json({
       examiner: result.examiner,
-      token: result.token
+      message: "Login successful",
     });
   } catch (error) {
     console.log(error);
@@ -31,6 +40,13 @@ export const logoutController = async (
   next: NextFunction
 ) => {
   try {
+    res.clearCookie("authToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+    });
+
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     next(new AppError("Internal server error", 500));
